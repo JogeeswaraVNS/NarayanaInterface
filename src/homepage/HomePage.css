@@ -1,0 +1,47 @@
+.rotate{
+    animation: rotate 10s linear infinite
+}
+
+@keyframes rotate {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .rotatereverse{
+    animation: rotatereverse 10s linear infinite
+}
+
+@keyframes rotatereverse {
+    from {
+      transform: rotate(360deg);
+    }
+    to {
+      transform: rotate(0deg);
+    }
+  }
+
+  @keyframes fadeInOut {
+    0% { opacity: 0; }
+    20% { opacity: 1; }
+    80% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  
+  .image1 {
+    animation: fadeInOut 3s infinite;
+  }
+  
+  .image2 {
+    animation: fadeInOut 3s infinite;
+    animation-delay: 3s;
+  }
+  
+  .image3 {
+    animation: fadeInOut 3s infinite;
+    animation-delay: 6s;
+  }
+  
