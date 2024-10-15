@@ -25,7 +25,7 @@ def preprocess_image(file, target_size):
     image = image.resize(target_size)  # Resize the image to the target size
     image = img_to_array(image)  # Convert to numpy array
     image = np.expand_dims(image, axis=0)  # Add batch dimension
-    image /= 255.0  # Normalize to [0, 1] range
+    # image /= 255.0  # Normalize to [0, 1] range
     return image
 
 @app.route('/upload', methods=['POST'])

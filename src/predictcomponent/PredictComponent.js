@@ -6,6 +6,8 @@ function PredictComponent() {
   const [uploadedImage, setUploadedImage] = useState(null);
   const [ImageResult, setImageResult] = useState(null);
 
+  let api='https://dog-suitable-visually.ngrok-free.app'
+
   const handleFileChange = (event) => {
     setSelectedFile(event.target.files[0]);
     setUploadedImage(URL.createObjectURL(event.target.files[0]));
@@ -22,11 +24,12 @@ function PredictComponent() {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/upload",
+        `${api}/upload`,
         formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
+            "ngrok-skip-browser-warning": "true"
           },
         }
       );
@@ -66,7 +69,7 @@ function PredictComponent() {
       </div>
       <div style={{display:'flex',justifyContent:'center'}}>
       <div
-        className="btn btn-outline-primary text-white px-4 py-2 mt-4"
+        className="btn btn-outline-primary px-4 py-2 mt-4"
         style={{ fontSize: "1.2rem" }}
         onClick={handleUpload}
       >
