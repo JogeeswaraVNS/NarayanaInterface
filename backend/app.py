@@ -9,7 +9,7 @@ from keras.layers import PReLU
 import tensorflow as tf
 import base64
 import matplotlib.pyplot as plt
-from tensorflow.keras.preprocessing.image import load_img, img_to_array
+from tensorflow.keras.preprocessing.image import img_to_array
 
 # Initialize Flask app and enable CORS
 app = Flask(__name__)
@@ -39,6 +39,7 @@ custom_objects = {
 model = load_model('C:/Users/PVR SUDHAKAR/Desktop/NarayanaInterface/backend/filter model/FilterModelTestingOutput2.h5', custom_objects=custom_objects)
 
 def preprocess_image(file, target_size):
+    """Preprocess the uploaded image file for model prediction."""
     file.seek(0)
     image = Image.open(io.BytesIO(file.read()))
     image = image.convert('RGB')
@@ -48,6 +49,7 @@ def preprocess_image(file, target_size):
     return image
 
 def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
+    """Generate a Grad-CAM heatmap for the specified convolutional layer."""
     grad_model = tf.keras.models.Model([model.inputs], [model.get_layer(last_conv_layer_name).output, model.output])
     
     with tf.GradientTape() as tape:
@@ -66,6 +68,7 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None
     return heatmap.numpy()
 
 def save_gradcam_image(img_array, heatmap, alpha=0.4):
+    """Overlay the Grad-CAM heatmap on the original image."""
     img = img_array[0]
     heatmap = np.uint8(255 * heatmap)
     jet = plt.get_cmap("jet")
@@ -86,12 +89,14 @@ def save_gradcam_image(img_array, heatmap, alpha=0.4):
     return img_io
 
 def encode_image_to_base64(image):
+    """Convert an image to a Base64 string."""
     buffered = io.BytesIO()
     image.save(buffered, format="PNG")
     return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
+    """Handle file upload and generate Grad-CAM images."""
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
 
@@ -128,6 +133,7 @@ def upload_file():
 # Health check route
 @app.route('/', methods=['GET'])
 def check():
+    """Health check for the server."""
     return '<h1>Server is running</h1>'
 
 if __name__ == '__main__':
