@@ -57,6 +57,7 @@ def preprocess_image(file, target_size):
         print(f"Error processing image: {e}")
         raise e
 
+
 # Helper function to generate Grad-CAM heatmap
 def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
     grad_model = keras.models.Model(model.inputs, [model.get_layer(last_conv_layer_name).output, model.output])
@@ -96,26 +97,9 @@ def save_gradcam_image(img_path, heatmap, alpha=0.4):
     superimposed_img = jet_heatmap * alpha + img
     superimposed_img = np.clip(superimposed_img, 0, 255).astype(np.uint8)
 
-    return superimposed_img
-
-# Function to create a grid of Grad-CAM images
-def create_gradcam_grid(heatmaps, original_img):
-    grid_size = 2  # 2x2 grid
-    fig, axs = plt.subplots(grid_size, grid_size, figsize=(8, 8))
-    
-    for i in range(grid_size):
-        for j in range(grid_size):
-            index = i * grid_size + j
-            if index < len(heatmaps):
-                axs[i, j].imshow(heatmaps[index])
-            axs[i, j].axis('off')
-
-    # Save grid image to an in-memory file
+    # Save the image to an in-memory file
     img_io = io.BytesIO()
-    plt.subplots_adjust(wspace=0, hspace=0)
-    plt.axis('off')  # Hide the axis
-    plt.savefig(img_io, format='png')
-    plt.close(fig)
+    Image.fromarray(superimposed_img).save(img_io, 'PNG')
     img_io.seek(0)
     
     return img_io
@@ -146,25 +130,14 @@ def upload_file():
         file.seek(0)
         file.save(save_path)
 
-        # Define the convolutional layer names for Grad-CAM
-        conv_layers = [
-            "conv2d_2",  # Layer 1
-            "conv2d_3",  # Layer 2
-            "conv2d_4",  # Layer 3
-            "conv2d_5"   # Layer 4
-        ]
+        # Generate Grad-CAM heatmap
 
-        # Generate Grad-CAM heatmaps for each class
-        heatmaps = []
-        for layer in conv_layers:
-            for i in range(4):  # Assuming 4 classes
-                img_array = preprocess_image(file, target_size=(128, 128))
-                heatmap = make_gradcam_heatmap(img_array, model, layer, pred_index=i)
-                gradcam_img = save_gradcam_image(save_path, heatmap)
-                heatmaps.append(gradcam_img)
+        last_conv_layer_name = "conv2d_4"
+        img_array = preprocess_image(file, target_size=(128, 128))
+        heatmap = make_gradcam_heatmap(img_array, model, last_conv_layer_name)
 
-        # Create a grid of Grad-CAM images
-        gradcam_grid_io = create_gradcam_grid(heatmaps, save_path)
+        # Generate Grad-CAM output image
+        gradcam_img_io = save_gradcam_image(save_path, heatmap)
 
         # Clean up by deleting the saved image
         try:
@@ -172,8 +145,8 @@ def upload_file():
         except Exception as e:
             print(f"Error deleting file {save_path}: {e}")
 
-        # Return the Grad-CAM grid image to the frontend
-        return send_file(gradcam_grid_io, mimetype='image/png')
+        # Return the Grad-CAM image to the frontend
+        return send_file(gradcam_img_io, mimetype='image/png')
 
 # Health check route
 @app.route('/', methods=['GET'])
