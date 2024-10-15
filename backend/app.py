@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file, send_from_directory
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from PIL import Image
 import os
@@ -7,13 +7,9 @@ import io
 from keras.models import load_model
 from keras.layers import PReLU
 import tensorflow as tf
-import keras
 import base64
 import matplotlib.pyplot as plt
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
-
-# Setting Keras backend to TensorFlow
-os.environ["KERAS_BACKEND"] = "tensorflow"
 
 # Initialize Flask app and enable CORS
 app = Flask(__name__)
@@ -52,7 +48,7 @@ def preprocess_image(file, target_size):
     return image
 
 def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
-    grad_model = keras.models.Model([model.inputs], [model.get_layer(last_conv_layer_name).output, model.output])
+    grad_model = tf.keras.models.Model([model.inputs], [model.get_layer(last_conv_layer_name).output, model.output])
     
     with tf.GradientTape() as tape:
         last_conv_layer_output, preds = grad_model(img_array)
@@ -69,16 +65,14 @@ def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None
     heatmap = tf.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
     return heatmap.numpy()
 
-def save_gradcam_image(img_path, heatmap, alpha=0.4):
-    img = load_img(img_path)
-    img = img_to_array(img)
-
+def save_gradcam_image(img_array, heatmap, alpha=0.4):
+    img = img_array[0]
     heatmap = np.uint8(255 * heatmap)
     jet = plt.get_cmap("jet")
     jet_colors = jet(np.arange(256))[:, :3]
     jet_heatmap = jet_colors[heatmap]
 
-    jet_heatmap = tf.keras.preprocessing.image.array_to_img(jet_heatmap)
+    jet_heatmap = Image.fromarray((jet_heatmap * 255).astype(np.uint8))
     jet_heatmap = jet_heatmap.resize((img.shape[1], img.shape[0]))
 
     jet_heatmap = img_to_array(jet_heatmap)
@@ -88,8 +82,13 @@ def save_gradcam_image(img_path, heatmap, alpha=0.4):
     img_io = io.BytesIO()
     Image.fromarray(superimposed_img).save(img_io, 'PNG')
     img_io.seek(0)
-    
+
     return img_io
+
+def encode_image_to_base64(image):
+    buffered = io.BytesIO()
+    image.save(buffered, format="PNG")
+    return base64.b64encode(buffered.getvalue()).decode('utf-8')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -103,26 +102,26 @@ def upload_file():
     if file:
         processed_image = preprocess_image(file, target_size=(128, 128))
         results = model.predict(processed_image)
-        
-        original_filename = file.filename
-        save_path = os.path.join(UPLOAD_FOLDER, original_filename)
-        file.seek(0)
-        file.save(save_path)
 
+        # Save original image to buffer and encode in Base64
+        original_image = Image.open(io.BytesIO(file.read()))
+        original_image_base64 = encode_image_to_base64(original_image)
+
+        # Grad-CAM processing
         conv_layers = ["conv2d_1", "conv2d_2", "conv2d_3", "conv2d_4"]
         gradcam_images = []
 
         for layer in conv_layers:
             heatmap = make_gradcam_heatmap(processed_image, model, layer)
-            gradcam_img_io = save_gradcam_image(save_path, heatmap)
+            gradcam_img_io = save_gradcam_image(processed_image, heatmap)
             
-            # Encode the Grad-CAM image in base64
+            # Encode Grad-CAM image in Base64
             encoded_image = base64.b64encode(gradcam_img_io.getvalue()).decode('utf-8')
             gradcam_images.append(encoded_image)
 
-        # Send the original uploaded image path and 4 Grad-CAM images as base64
+        # Send original image and Grad-CAM images as Base64 strings
         return jsonify({
-            'original_image': save_path,
+            'original_image': original_image_base64,
             'gradcams': gradcam_images
         })
 
