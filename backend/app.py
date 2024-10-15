@@ -218,6 +218,101 @@ def gradcam_layer_2():
         return send_file(gradcam_img_io, mimetype='image/png')
     
     
+    
+# Route to handle file uploads and Grad-CAM generation Layer 3
+@app.route('/GradCamLayer3', methods=['POST'])
+def gradcam_layer_3():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    preclass = {0: "Xray", 1: "CT-Scan", 2: "Ultra Sound", 3: "Cannot Identify"}
+
+    if file:
+        # Preprocess the uploaded image
+        processed_image = preprocess_image(file, target_size=(128, 128))
+
+        # Predict using the model
+        results = model.predict(processed_image)
+        response = preclass[np.argmax(results)]
+
+        # Save original image to disk
+        original_filename = file.filename
+        save_path = os.path.join(UPLOAD_FOLDER, original_filename)
+        file.seek(0)
+        file.save(save_path)
+
+        # Generate Grad-CAM heatmap
+
+        last_conv_layer_name = "conv2d_3"
+        img_array = preprocess_image(file, target_size=(128, 128))
+        heatmap = make_gradcam_heatmap(img_array, model, last_conv_layer_name)
+
+        # Generate Grad-CAM output image
+        gradcam_img_io = save_gradcam_image(save_path, heatmap)
+
+        # Clean up by deleting the saved image
+        try:
+            os.remove(save_path)
+        except Exception as e:
+            print(f"Error deleting file {save_path}: {e}")
+
+        # Return the Grad-CAM image to the frontend
+        return send_file(gradcam_img_io, mimetype='image/png')
+
+
+
+
+# Route to handle file uploads and Grad-CAM generation Layer 4
+@app.route('/GradCamLayer4', methods=['POST'])
+def gradcam_layer_4():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+
+    preclass = {0: "Xray", 1: "CT-Scan", 2: "Ultra Sound", 3: "Cannot Identify"}
+
+    if file:
+        # Preprocess the uploaded image
+        processed_image = preprocess_image(file, target_size=(128, 128))
+
+        # Predict using the model
+        results = model.predict(processed_image)
+        response = preclass[np.argmax(results)]
+
+        # Save original image to disk
+        original_filename = file.filename
+        save_path = os.path.join(UPLOAD_FOLDER, original_filename)
+        file.seek(0)
+        file.save(save_path)
+
+        # Generate Grad-CAM heatmap
+
+        last_conv_layer_name = "conv2d_4"
+        img_array = preprocess_image(file, target_size=(128, 128))
+        heatmap = make_gradcam_heatmap(img_array, model, last_conv_layer_name)
+
+        # Generate Grad-CAM output image
+        gradcam_img_io = save_gradcam_image(save_path, heatmap)
+
+        # Clean up by deleting the saved image
+        try:
+            os.remove(save_path)
+        except Exception as e:
+            print(f"Error deleting file {save_path}: {e}")
+
+        # Return the Grad-CAM image to the frontend
+        return send_file(gradcam_img_io, mimetype='image/png')
+    
+      
+    
+    
 
 # Health check route
 @app.route('/', methods=['GET'])
