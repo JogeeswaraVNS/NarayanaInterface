@@ -122,7 +122,10 @@ def upload_file():
 
         # Predict using the model
         results = model.predict(processed_image)
+        for i in results:
+            print(i)
         response = preclass[np.argmax(results)]
+        print(response)
 
         # Return the results to the frontend
         return jsonify(response)

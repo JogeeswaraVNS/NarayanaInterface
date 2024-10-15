@@ -9,7 +9,7 @@ function HomeLayout() {
       <div style={{ position: 'fixed', width: '100%' }}>
         <ProjectNavbar />
       </div>
-      <div className="bg- text-white" style={{ minHeight: '100vh', paddingTop: '3.8rem',backgroundColor:'black' }}>
+      <div className="" style={{ minHeight: '100vh'}}>
         <Outlet />
       </div>
     </div>

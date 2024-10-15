@@ -107,78 +107,107 @@ const GradCamApp = () => {
   };
 
   return (
-    <div className="px-5 text-white pt-3">
+    <div style={{minHeight:'100vh',paddingTop:'5rem'}} className={`px-5 ${selectedFile? "bg-primary text-white":""}`}>
       <h3>
         The system is integrated with Explainable AI through Grad-CAM Viewer
       </h3>
 
       <div className="row text-center pt-3">
-        <div className="col-2">
-          {uploadedImage && (
-            <div className="mb-3">
-              <img
-              className="p-0"
-                src={uploadedImage}
-                alt="Uploaded"
-                style={{ width: "100%" }}
-              />
-              {FilterResult ? (
-                <h5 className="pt-2">{FilterResult}</h5>
-              ) : (
-                <h5 className="pt-2">Input image</h5>
+        <div className="col-6">
+          <div className="">
+            {uploadedImage && (
+              <div className="mb-3">
+                <img
+                  className="p-0"
+                  src={uploadedImage}
+                  alt="Uploaded"
+                  style={{ width: "65%" }}
+                />
+                {FilterResult ? (
+                  <h5 className="pt-2">{FilterResult}</h5>
+                ) : (
+                  <h5 className="pt-2">Input image</h5>
+                )}
+              </div>
+            )}
+          </div>
+          {FilterResult && (
+            <h5 className="mb-3">
+              The proposed model classified the input image as {FilterResult}
+            </h5>
+          )}
+          <input
+            className="form-control btn btn-dark"
+            style={{ fontSize: "1.2rem", width: "50%" }}
+            type="file"
+            onChange={handleFileChange}
+          />
+          <br></br>
+          <button
+            className="btn btn-dark mt-3"
+            onClick={handleUpload}
+            style={{ fontSize: "1.2rem", width: "50%" }}
+            disabled={loading}
+          >
+            {loading
+              ? "Generating Grad-CAM..."
+              : "Upload and Generate Grad-CAM"}
+          </button>
+        </div>
+        {FilterResult && (
+          <div
+            className="col-5 text-white"
+          >
+            <div className="row">
+              {gradCamImage1 && (
+                <div className="col-6">
+                  <img
+                    src={gradCamImage1}
+                    alt="Grad-CAM"
+                    style={{ width: "100%" }}
+                  />
+                  <h5 className="pt-2">CNN Layer 1 Grad-CAM</h5>
+                </div>
+              )}
+
+              {gradCamImage2 && (
+                <div className="col-6">
+                  <img
+                    src={gradCamImage2}
+                    alt="Grad-CAM"
+                    style={{ width: "100%" }}
+                  />
+                  <h5 className="pt-2">CNN Layer 2 Grad-CAM</h5>
+                </div>
               )}
             </div>
-          )}
-        </div>
 
-        {gradCamImage1 && (
-          <div className="col-2">
-            <img src={gradCamImage1} alt="Grad-CAM" style={{ width: "100%" }} />
-            <h5 className="pt-2">CNN Layer 1 Grad-CAM</h5>
-          </div>
-        )}
+            <div className="row">
+              {gradCamImage3 && (
+                <div className="col-6">
+                  <img
+                    src={gradCamImage3}
+                    alt="Grad-CAM"
+                    style={{ width: "100%" }}
+                  />
+                  <h5 className="pt-2">CNN Layer 3 Grad-CAM</h5>
+                </div>
+              )}
 
-        {gradCamImage2 && (
-          <div className="col-2">
-            <img src={gradCamImage2} alt="Grad-CAM" style={{ width: "100%" }} />
-            <h5 className="pt-2">CNN Layer 2 Grad-CAM</h5>
-          </div>
-        )}
-
-        {gradCamImage3 && (
-          <div className="col-2">
-            <img src={gradCamImage3} alt="Grad-CAM" style={{ width: "100%" }} />
-            <h5 className="pt-2">CNN Layer 3 Grad-CAM</h5>
-          </div>
-        )}
-
-        {gradCamImage4 && (
-          <div className="col-2">
-            <img src={gradCamImage4} alt="Grad-CAM" style={{ width: "100%" }} />
-            <h5 className="pt-2">CNN Layer 4 Grad-CAM</h5>
+              {gradCamImage4 && (
+                <div className="col-6">
+                  <img
+                    src={gradCamImage4}
+                    alt="Grad-CAM"
+                    style={{ width: "100%" }}
+                  />
+                  <h5 className="pt-2">CNN Layer 4 Grad-CAM</h5>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
-      {FilterResult && (
-        <h5 className="mb-3">
-          The proposed model classified the input image as {FilterResult}
-        </h5>
-      )}
-      <input
-        className="form-control btn btn-primary"
-        style={{ fontSize: "1.2rem", width: "25%" }}
-        type="file"
-        onChange={handleFileChange}
-      />
-      <br></br>
-      <button
-        className="btn btn-primary mt-3"
-        onClick={handleUpload}
-        style={{ fontSize: "1.2rem", width: "25%" }}
-        disabled={loading}
-      >
-        {loading ? "Generating Grad-CAM..." : "Upload and Generate Grad-CAM"}
-      </button>
     </div>
   );
 };
