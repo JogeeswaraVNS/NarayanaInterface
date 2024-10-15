@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 from PIL import Image
 import os
@@ -41,44 +41,33 @@ custom_objects = {
 }
 model = load_model('C:/Users/PVR SUDHAKAR/Desktop/NarayanaInterface/backend/filter model/FilterModelTestingOutput2.h5', custom_objects=custom_objects)
 
-# Print model summary
-print(model.summary())
-
 def preprocess_image(file, target_size):
-    try:
-        file.seek(0)  # Reset file pointer to the beginning
-        image = Image.open(io.BytesIO(file.read()))
-        image = image.convert('RGB')  # Convert grayscale images to RGB
-        image = image.resize(target_size)
-        image = img_to_array(image)
-        image = np.expand_dims(image, axis=0)
-        return image
-    except Exception as e:
-        print(f"Error processing image: {e}")
-        raise e
+    file.seek(0)
+    image = Image.open(io.BytesIO(file.read()))
+    image = image.convert('RGB')
+    image = image.resize(target_size)
+    image = img_to_array(image)
+    image = np.expand_dims(image, axis=0)
+    return image
 
-
-# Helper function to generate Grad-CAM heatmap
 def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
-    grad_model = keras.models.Model(model.inputs, [model.get_layer(last_conv_layer_name).output, model.output])
+    grad_model = keras.models.Model([model.inputs], [model.get_layer(last_conv_layer_name).output, model.output])
     
     with tf.GradientTape() as tape:
         last_conv_layer_output, preds = grad_model(img_array)
         if pred_index is None:
             pred_index = tf.argmax(preds[0])
         class_channel = preds[:, pred_index]
-    
-    # Compute gradients
+
     grads = tape.gradient(class_channel, last_conv_layer_output)
     pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
-    
+
     last_conv_layer_output = last_conv_layer_output[0]
     heatmap = last_conv_layer_output @ pooled_grads[..., tf.newaxis]
     heatmap = tf.squeeze(heatmap)
     heatmap = tf.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
     return heatmap.numpy()
 
-# Function to save Grad-CAM image and return it as an in-memory file
 def save_gradcam_image(img_path, heatmap, alpha=0.4):
     img = load_img(img_path)
     img = img_to_array(img)
@@ -88,23 +77,19 @@ def save_gradcam_image(img_path, heatmap, alpha=0.4):
     jet_colors = jet(np.arange(256))[:, :3]
     jet_heatmap = jet_colors[heatmap]
 
-    # Resize heatmap to match image size
     jet_heatmap = tf.keras.preprocessing.image.array_to_img(jet_heatmap)
     jet_heatmap = jet_heatmap.resize((img.shape[1], img.shape[0]))
 
-    # Superimpose heatmap on image
     jet_heatmap = img_to_array(jet_heatmap)
     superimposed_img = jet_heatmap * alpha + img
     superimposed_img = np.clip(superimposed_img, 0, 255).astype(np.uint8)
 
-    # Save the image to an in-memory file
     img_io = io.BytesIO()
     Image.fromarray(superimposed_img).save(img_io, 'PNG')
     img_io.seek(0)
     
     return img_io
 
-# Route to handle file uploads and Grad-CAM generation
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
@@ -114,38 +99,28 @@ def upload_file():
     if file.filename == '':
         return jsonify({'error': 'No file selected'}), 400
 
-    preclass = {0: "Xray", 1: "CT-Scan", 2: "Ultra Sound", 3: "Cannot Identify"}
-
     if file:
-        # Preprocess the uploaded image
         processed_image = preprocess_image(file, target_size=(128, 128))
-
-        # Predict using the model
         results = model.predict(processed_image)
-        response = preclass[np.argmax(results)]
-
-        # Save original image to disk
+        
         original_filename = file.filename
         save_path = os.path.join(UPLOAD_FOLDER, original_filename)
         file.seek(0)
         file.save(save_path)
 
-        # Generate Grad-CAM heatmap
-        last_conv_layer_name = "conv2d_2"
-        img_array = preprocess_image(file, target_size=(128, 128))
-        heatmap = make_gradcam_heatmap(img_array, model, last_conv_layer_name)
+        conv_layers = ["conv2d_1", "conv2d_2", "conv2d_3", "conv2d_4"]
+        gradcam_images = []
 
-        # Generate Grad-CAM output image
-        gradcam_img_io = save_gradcam_image(save_path, heatmap)
+        for layer in conv_layers:
+            heatmap = make_gradcam_heatmap(processed_image, model, layer)
+            gradcam_img_io = save_gradcam_image(save_path, heatmap)
+            gradcam_images.append(gradcam_img_io)
 
-        # Clean up by deleting the saved image
-        try:
-            os.remove(save_path)
-        except Exception as e:
-            print(f"Error deleting file {save_path}: {e}")
-
-        # Return the Grad-CAM image to the frontend
-        return send_file(gradcam_img_io, mimetype='image/png')
+        # Send the original uploaded image and 4 Grad-CAM images
+        return jsonify({
+            'original_image': save_path,
+            'gradcams': [io.BytesIO(image.read()).getvalue() for image in gradcam_images]
+        })
 
 # Health check route
 @app.route('/', methods=['GET'])

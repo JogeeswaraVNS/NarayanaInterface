@@ -3,10 +3,11 @@ import axios from 'axios';
 
 const GradCamApp = () => {
   const [selectedFile, setSelectedFile] = useState(null);
-  const [gradCamImage, setGradCamImage] = useState(null);
+  const [gradCamImages, setGradCamImages] = useState([]);
+  const [originalImage, setOriginalImage] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  let api='https://dog-suitable-visually.ngrok-free.app'
+  let api = 'https://dog-suitable-visually.ngrok-free.app';
 
   const handleFileChange = (event) => {
     setSelectedFile(event.target.files[0]);
@@ -28,13 +29,12 @@ const GradCamApp = () => {
           'Content-Type': 'multipart/form-data',
           "ngrok-skip-browser-warning": "true"
         },
-        responseType: 'blob' // To handle the binary image data
       });
 
-      const imageBlob = response.data;
-      const imageUrl = URL.createObjectURL(imageBlob);
-      setGradCamImage(imageUrl); // Set the image to display
+      const { original_image, gradcams } = response.data;
 
+      setOriginalImage(original_image);
+      setGradCamImages(gradcams.map((imgData, index) => URL.createObjectURL(new Blob([imgData]))));
     } catch (error) {
       console.error("Error uploading the file: ", error);
     } finally {
@@ -50,10 +50,19 @@ const GradCamApp = () => {
         {loading ? 'Generating Grad-CAM...' : 'Upload and Generate Grad-CAM'}
       </button>
 
-      {gradCamImage && (
-        <div >
-          <h2>Generated Grad-CAM:</h2>
-          <img src={gradCamImage} alt="Grad-CAM" style={{ width: '400px', height: '400px' }} />
+      {originalImage && (
+        <div>
+          <h2>Original Uploaded Image:</h2>
+          <img src={originalImage} alt="Original" style={{ width: '400px', height: '400px' }} />
+        </div>
+      )}
+
+      {gradCamImages.length > 0 && (
+        <div>
+          <h2>Generated Grad-CAMs:</h2>
+          {gradCamImages.map((imgSrc, index) => (
+            <img key={index} src={imgSrc} alt={`Grad-CAM Layer ${index + 1}`} style={{ width: '400px', height: '400px', margin: '10px' }} />
+          ))}
         </div>
       )}
     </div>
