@@ -6,10 +6,10 @@ import ProjectNavbar from '../projectnavbar/ProjectNavbar';
 function HomeLayout() {
   return (
     <div>
-      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, width: '100%' }}>
+      <div style={{ position: 'fixed', width: '100%' }}>
         <ProjectNavbar />
       </div>
-      <div className="" style={{ minHeight: '100vh', paddingTop: '3.8rem' }}>
+      <div className="bg- text-white" style={{ minHeight: '100vh', paddingTop: '3.8rem',backgroundColor:'black' }}>
         <Outlet />
       </div>
     </div>

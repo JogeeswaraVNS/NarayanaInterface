@@ -2,7 +2,6 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import HomeLayout from "./homelayout/HomeLayout";
 import HomePage from "./homepage/HomePage";
-import PredictComponent from "./predictcomponent/PredictComponent";
 import GradCamApp from "./gradcam/GradCamApp";
 
 function App() {
@@ -14,10 +13,6 @@ function App() {
         {
           path: "/",
           element: <HomePage />,
-        },
-        {
-          path: "/predict",
-          element: <PredictComponent />,
         },
         {
           path: "/gradcam",
