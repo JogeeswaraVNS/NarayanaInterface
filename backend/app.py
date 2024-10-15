@@ -8,6 +8,7 @@ from keras.models import load_model
 from keras.layers import PReLU
 import tensorflow as tf
 import keras
+import base64
 import matplotlib.pyplot as plt
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 
@@ -114,12 +115,15 @@ def upload_file():
         for layer in conv_layers:
             heatmap = make_gradcam_heatmap(processed_image, model, layer)
             gradcam_img_io = save_gradcam_image(save_path, heatmap)
-            gradcam_images.append(gradcam_img_io)
+            
+            # Encode the Grad-CAM image in base64
+            encoded_image = base64.b64encode(gradcam_img_io.getvalue()).decode('utf-8')
+            gradcam_images.append(encoded_image)
 
-        # Send the original uploaded image and 4 Grad-CAM images
+        # Send the original uploaded image path and 4 Grad-CAM images as base64
         return jsonify({
             'original_image': save_path,
-            'gradcams': [io.BytesIO(image.read()).getvalue() for image in gradcam_images]
+            'gradcams': gradcam_images
         })
 
 # Health check route
