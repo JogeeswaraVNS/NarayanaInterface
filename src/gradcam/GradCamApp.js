@@ -3,12 +3,13 @@ import axios from 'axios';
 
 const GradCamApp = () => {
   const [selectedFile, setSelectedFile] = useState(null);
-  const [gradCamImages, setGradCamImages] = useState([]);
+  const [gradCamImages, setGradCamImages] = useState([]); // Array for storing multiple Grad-CAM images
   const [originalImage, setOriginalImage] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null); // Added error state
+  const [error, setError] = useState(null);
+  const [fileInputKey, setFileInputKey] = useState(Date.now()); // Unique key for the file input
 
-  const api = 'https://dog-suitable-visually.ngrok-free.app'; // Remember to update this for production
+  const api = 'https://dog-suitable-visually.ngrok-free.app'; // Update for production
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
@@ -47,9 +48,9 @@ const GradCamApp = () => {
       setOriginalImage(original_image);
       setGradCamImages(gradcams); // Ensure this is an array of Base64 strings
 
-      // Reset file input
+      // Reset file input by updating the key
       setSelectedFile(null);
-      document.getElementById("file-input").value = ""; // Reset the file input UI
+      setFileInputKey(Date.now()); // Reset file input UI by changing the key
     } catch (error) {
       console.error("Error uploading the file: ", error);
       setError("Failed to generate Grad-CAM. Please try again."); // Set error message
@@ -60,7 +61,6 @@ const GradCamApp = () => {
 
   // Clean up blob URLs to avoid memory leaks
   useEffect(() => {
-    // Clean up function to revoke URLs
     return () => {
       gradCamImages.forEach((url) => URL.revokeObjectURL(url));
     };
@@ -71,8 +71,17 @@ const GradCamApp = () => {
       <h1>Grad-CAM Viewer</h1>
 
       {/* File input */}
-      <input id="file-input" type="file" accept="image/*" onChange={handleFileChange} />
-      <button className="btn btn-primary" onClick={handleUpload} disabled={loading}>
+      <input
+        key={fileInputKey} // Use key to force re-render the input
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+      />
+      <button
+        className="btn btn-primary"
+        onClick={handleUpload}
+        disabled={loading}
+      >
         {loading ? 'Generating Grad-CAM...' : 'Upload and Generate Grad-CAM'}
       </button>
 
@@ -83,7 +92,11 @@ const GradCamApp = () => {
       {originalImage && (
         <div>
           <h2>Original Uploaded Image:</h2>
-          <img src={`data:image/png;base64,${originalImage}`} alt="Original" style={{ width: '400px', height: '400px' }} />
+          <img
+            src={`data:image/png;base64,${originalImage}`}
+            alt="Original"
+            style={{ width: '400px', height: '400px' }}
+          />
         </div>
       )}
 
@@ -92,7 +105,12 @@ const GradCamApp = () => {
         <div>
           <h2>Generated Grad-CAMs:</h2>
           {gradCamImages.map((imgSrc, index) => (
-            <img key={index} src={`data:image/png;base64,${imgSrc}`} alt={`Grad-CAM Layer ${index + 1}`} style={{ width: '400px', height: '400px', margin: '10px' }} />
+            <img
+              key={index}
+              src={`data:image/png;base64,${imgSrc}`}
+              alt={`Grad-CAM Layer ${index + 1}`}
+              style={{ width: '400px', height: '400px', margin: '10px' }}
+            />
           ))}
         </div>
       )}
