@@ -45,15 +45,66 @@ model = load_model('C:/Users/PVR SUDHAKAR/Desktop/NarayanaInterface/backend/filt
 print(model.summary())
 
 def preprocess_image(file, target_size):
-    # Convert the file to a PIL image
-    image = Image.open(io.BytesIO(file.read()))  # Use io.BytesIO to handle the file stream
-    image = image.convert("RGB")  # Convert to RGB
-    image = image.resize(target_size)  # Resize the image to the target size
-    image = img_to_array(image)  # Convert to numpy array
-    image = np.expand_dims(image, axis=0)  # Add batch dimension
-    image /= 255.0  # Normalize to [0, 1] range
-    return image
+    try:
+        file.seek(0)  # Reset file pointer to the beginning
+        image = Image.open(io.BytesIO(file.read()))
+        image = image.convert('RGB')  # Convert grayscale images to RGB
+        image = image.resize(target_size)
+        image = img_to_array(image)
+        image = np.expand_dims(image, axis=0)
+        return image
+    except Exception as e:
+        print(f"Error processing image: {e}")
+        raise e
 
+
+# Helper function to generate Grad-CAM heatmap
+def make_gradcam_heatmap(img_array, model, last_conv_layer_name, pred_index=None):
+    grad_model = keras.models.Model(model.inputs, [model.get_layer(last_conv_layer_name).output, model.output])
+    
+    with tf.GradientTape() as tape:
+        last_conv_layer_output, preds = grad_model(img_array)
+        if pred_index is None:
+            pred_index = tf.argmax(preds[0])
+        class_channel = preds[:, pred_index]
+    
+    # Compute gradients
+    grads = tape.gradient(class_channel, last_conv_layer_output)
+    pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+    
+    last_conv_layer_output = last_conv_layer_output[0]
+    heatmap = last_conv_layer_output @ pooled_grads[..., tf.newaxis]
+    heatmap = tf.squeeze(heatmap)
+    heatmap = tf.maximum(heatmap, 0) / tf.math.reduce_max(heatmap)
+    return heatmap.numpy()
+
+# Function to save Grad-CAM image and return it as an in-memory file
+def save_gradcam_image(img_path, heatmap, alpha=0.4):
+    img = load_img(img_path)
+    img = img_to_array(img)
+
+    heatmap = np.uint8(255 * heatmap)
+    jet = plt.get_cmap("jet")
+    jet_colors = jet(np.arange(256))[:, :3]
+    jet_heatmap = jet_colors[heatmap]
+
+    # Resize heatmap to match image size
+    jet_heatmap = tf.keras.preprocessing.image.array_to_img(jet_heatmap)
+    jet_heatmap = jet_heatmap.resize((img.shape[1], img.shape[0]))
+
+    # Superimpose heatmap on image
+    jet_heatmap = img_to_array(jet_heatmap)
+    superimposed_img = jet_heatmap * alpha + img
+    superimposed_img = np.clip(superimposed_img, 0, 255).astype(np.uint8)
+
+    # Save the image to an in-memory file
+    img_io = io.BytesIO()
+    Image.fromarray(superimposed_img).save(img_io, 'PNG')
+    img_io.seek(0)
+    
+    return img_io
+
+# Route to handle file uploads and Grad-CAM generation
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
