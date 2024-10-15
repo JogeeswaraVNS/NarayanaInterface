@@ -130,7 +130,7 @@ def upload_file():
     
 # Route to handle file uploads and Grad-CAM generation Layer 1
 @app.route('/GradCamLayer1', methods=['POST'])
-def upload_file():
+def gradcam_layer_1():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
 
@@ -175,7 +175,7 @@ def upload_file():
     
 # Route to handle file uploads and Grad-CAM generation Layer 2
 @app.route('/GradCamLayer2', methods=['POST'])
-def upload_file():
+def gradcam_layer_2():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
 

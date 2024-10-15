@@ -23,7 +23,7 @@ const GradCamApp = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${api}/upload`, formData, {
+      const response = await axios.post(`${api}/GradCamLayer1`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           "ngrok-skip-browser-warning": "true"
@@ -34,6 +34,14 @@ const GradCamApp = () => {
       const imageBlob = response.data;
       const imageUrl = URL.createObjectURL(imageBlob);
       setGradCamImage(imageUrl); // Set the image to display
+
+      const result = await axios.post(`${api}/Prediction`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          "ngrok-skip-browser-warning": "true"
+        },
+      });
+      console.log(result.data)
 
     } catch (error) {
       console.error("Error uploading the file: ", error);
