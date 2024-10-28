@@ -151,6 +151,7 @@ def get_result(FilterResult):
 # Route to handle file uploads and Grad-CAM generation Layer 1
 @app.route('/GradCamLayer1/<FilterResult>', methods=['POST'])
 def gradcam_layer_1(FilterResult):
+    print(FilterResult,'FilterResult')
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
     file = request.files['file']
@@ -223,6 +224,8 @@ def gradcam_layer_1(FilterResult):
                 print(f"Error deleting file {save_path}: {e}")
 
             return send_file(gradcam_img_io, mimetype='image/png')
+    else:
+        return jsonify("Error")
     
     
 # Route to handle file uploads and Grad-CAM generation Layer 2
