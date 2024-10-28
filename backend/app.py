@@ -41,8 +41,10 @@ custom_objects = {
 }
 model = load_model('C:/Users/PVR SUDHAKAR/Desktop/NarayanaInterface/backend/filter model/FilterModelTestingOutput2.h5', custom_objects=custom_objects)
 
+xray_model=load_model('C:/Users/PVR SUDHAKAR/Desktop/NarayanaInterface/frontend/Narayana Imp Files/XrayModel.h5', custom_objects=custom_objects)
+
 # Print model summary
-print(model.summary())
+print(xray_model.summary())
 
 def preprocess_image(file, target_size):
     try:
