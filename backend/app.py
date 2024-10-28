@@ -41,10 +41,15 @@ custom_objects = {
 }
 model = load_model('C:/Users/PVR SUDHAKAR/Desktop/NarayanaInterface/backend/filter model/FilterModelTestingOutput2.h5', custom_objects=custom_objects)
 
-xray_model=load_model('C:/Users/PVR SUDHAKAR/Desktop/NarayanaInterface/frontend/Narayana Imp Files/XrayModel.h5', custom_objects=custom_objects)
+xray_model=load_model('C:/Users/PVR SUDHAKAR/Desktop/NarayanaInterface/Narayana Imp Files/XrayModel.h5', custom_objects=custom_objects)
+
+ctscan_model=load_model('C:/Users/PVR SUDHAKAR/Desktop/NarayanaInterface/Narayana Imp Files/CtscanModel.h5', custom_objects=custom_objects)
+
+ultrasound_model=load_model('C:/Users/PVR SUDHAKAR/Desktop/NarayanaInterface/Narayana Imp Files/UltraSoundModel.h5', custom_objects=custom_objects)
 
 # Print model summary
-print(xray_model.summary())
+print(ctscan_model.summary())
+print(ultrasound_model.summary())
 
 def preprocess_image(file, target_size):
     try:
@@ -237,35 +242,34 @@ def gradcam_layer_3():
     preclass = {0: "Xray", 1: "CT-Scan", 2: "Ultra Sound", 3: "Cannot Identify"}
 
     if file:
-        # Preprocess the uploaded image
+
         processed_image = preprocess_image(file, target_size=(128, 128))
 
-        # Predict using the model
+
         results = model.predict(processed_image)
         response = preclass[np.argmax(results)]
 
-        # Save original image to disk
+
         original_filename = file.filename
         save_path = os.path.join(UPLOAD_FOLDER, original_filename)
         file.seek(0)
         file.save(save_path)
 
-        # Generate Grad-CAM heatmap
+
 
         last_conv_layer_name = "conv2d_3"
         img_array = preprocess_image(file, target_size=(128, 128))
         heatmap = make_gradcam_heatmap(img_array, model, last_conv_layer_name)
 
-        # Generate Grad-CAM output image
+
         gradcam_img_io = save_gradcam_image(save_path, heatmap)
 
-        # Clean up by deleting the saved image
         try:
             os.remove(save_path)
         except Exception as e:
             print(f"Error deleting file {save_path}: {e}")
 
-        # Return the Grad-CAM image to the frontend
+
         return send_file(gradcam_img_io, mimetype='image/png')
 
 
@@ -284,42 +288,41 @@ def gradcam_layer_4():
     preclass = {0: "Xray", 1: "CT-Scan", 2: "Ultra Sound", 3: "Cannot Identify"}
 
     if file:
-        # Preprocess the uploaded image
+
         processed_image = preprocess_image(file, target_size=(128, 128))
 
-        # Predict using the model
+
         results = model.predict(processed_image)
         response = preclass[np.argmax(results)]
 
-        # Save original image to disk
+
         original_filename = file.filename
         save_path = os.path.join(UPLOAD_FOLDER, original_filename)
         file.seek(0)
         file.save(save_path)
 
-        # Generate Grad-CAM heatmap
+
 
         last_conv_layer_name = "conv2d_4"
         img_array = preprocess_image(file, target_size=(128, 128))
         heatmap = make_gradcam_heatmap(img_array, model, last_conv_layer_name)
 
-        # Generate Grad-CAM output image
+
         gradcam_img_io = save_gradcam_image(save_path, heatmap)
 
-        # Clean up by deleting the saved image
+
         try:
             os.remove(save_path)
         except Exception as e:
             print(f"Error deleting file {save_path}: {e}")
 
-        # Return the Grad-CAM image to the frontend
+
         return send_file(gradcam_img_io, mimetype='image/png')
     
       
     
     
 
-# Health check route
 @app.route('/', methods=['GET'])
 def check():
     return '<h1>Server is running</h1>'
