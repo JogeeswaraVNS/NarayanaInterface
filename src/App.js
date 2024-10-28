@@ -15,7 +15,7 @@ function App() {
           element: <HomePage />,
         },
         {
-          path: "/gradcam",
+          path: "/predict",
           element: <GradCamApp />,
         },
       ],

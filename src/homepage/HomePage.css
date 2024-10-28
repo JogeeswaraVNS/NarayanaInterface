@@ -1,0 +1,31 @@
+.card {
+    /* background-color: #f4f4f4; */
+    transition: transform 0.3s ease-in-out;
+  }
+  
+  .card:hover {
+    /* transform: scale(1.05); Slight scaling on hover */
+  }
+  
+  .card-text {
+    font-size: 18px;
+    color: #333;
+    text-align: center;
+  }
+  
+  .card-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.3s ease-in-out;
+  }
+  
+  .hovered .card-text {
+    display: none; /* Hide text when hovered */
+  }
+  
+  .hovered .card-image {
+    opacity: 1;
+    display: block;
+  }
+  

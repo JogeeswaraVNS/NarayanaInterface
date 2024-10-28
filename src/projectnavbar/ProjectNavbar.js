@@ -22,13 +22,13 @@ function ProjectNavbar() {
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
-              <Nav.Link className="text-white" href="/gradcam">
+              <Nav.Link className="text-white" href="/predict">
                 <Navbar.Brand
                   className="text-white"
                   style={{ fontFamily: "Lexend, sans-serif" }}
-                  href="/gradcam"
+                  href="/predict"
                 >
-                  GradCam
+                  Predict
                 </Navbar.Brand>
               </Nav.Link>
             </Nav>
