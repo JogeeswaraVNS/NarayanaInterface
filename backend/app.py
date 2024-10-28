@@ -135,6 +135,7 @@ def get_result(FilterResult):
     preclass = {0: "Positive", 1: "Negative"}
 
     if file:
+        results=''
         processed_image = preprocess_image(file, target_size=(128, 128))
         if FilterResult=='Xray':
             results = xray_model.predict(processed_image)
